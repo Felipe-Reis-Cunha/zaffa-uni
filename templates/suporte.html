@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Suporte - Zaffalon</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .card-header-custom {
+            background-color: #019313;
+            color: white;
+        }
+        .user-role-badge {
+            font-size: 0.8em;
+            padding: 0.35em 0.6em;
+        }
+        .nested-table {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .hover-zoom {
+            transition: transform 0.2s;
+        }
+        .hover-zoom:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-check"></i>
+                <span style="font-family: 'Poppins', sans-serif;">Zaffalon</span>
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/meios_pagamento">
+                    <i class="bi bi-credit-card"></i> Meios de Pagamento
+                </a>
+                <a class="nav-link" href="/logout">Sair</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Cards de Estatísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Ações Pendentes</h5>
+                        <p class="card-text display-6">{{ acoes|selectattr('status', 'equalto', 'pendente')|list|length }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Ações Aprovadas</h5>
+                        <p class="card-text display-6">{{ acoes|selectattr('status', 'equalto', 'aprovado')|list|length }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-danger">
+                    <div class="card-body">
+                        <h5 class="card-title">Ações Reprovadas</h5>
+                        <p class="card-text display-6">{{ acoes|selectattr('status', 'equalto', 'reprovado')|list|length }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body">
+                        <h5 class="card-title">Ações Concluídas</h5>
+                        <p class="card-text display-6">{{ acoes|selectattr('status', 'equalto', 'concluido')|list|length }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- Tabela de Ações Aprovadas -->
+<div class="card mb-4">
+    <div class="card-header card-header-custom">
+        <i class="bi bi-check-circle"></i> Ações Aprovadas
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Vendedor</th>
+                        <th>Cliente</th>
+                        <th>Tipo</th>
+                        <th>Meio Pagamento</th>
+                        <th>Produtos</th>
+                        <th>Ações</th> <!-- Removemos a coluna "Valor Total" -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for acao in acoes %}
+                        {% if acao.status == 'aprovado' %}  <!-- Filtra apenas ações aprovadas na tabela -->
+                        <tr class="hover-zoom">
+                            <td>{{ acao.user.username }}</td>
+                            <td>{{ acao.cliente_codigo }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'primary' if acao.tipo == 'MOB' else 'secondary' }}">
+                                    {{ acao.tipo }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if acao.meio_pagamento %}
+                                    <span class="badge bg-info">
+                                        {{ acao.meio_pagamento.nome }} ({{ acao.meio_pagamento.desconto_percentual }}%)
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="nested-table p-2">
+                                    {% for produto in acao.produtos %}
+                                    <div class="d-flex justify-content-between border-bottom pb-1 mb-1">
+                                        <div>
+                                            <strong>{{ produto.codigo }}</strong><br>
+                                            <small>
+                                                Atual: R$ {{ "%.2f"|format(produto.valor_atual) }},
+                                                Desejado: R$ {{ "%.2f"|format(produto.valor_desejado) }},
+                                                Final: R$ {{ "%.2f"|format(produto.valor_final) }} <!-- Exibe o valor final -->
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-primary">
+                                            {{ ((produto.valor_atual - produto.valor_desejado)/produto.valor_atual * 100)|round(2) }}%
+                                        </span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>
+                                <a href="/concluir_acao/{{ acao.id }}" class="btn btn-success btn-sm">
+                                    <i class="bi bi-check-lg"></i> Concluir
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#detalhesAcao{{ acao.id }}">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+        <!-- Gerenciamento de Usuários -->
+        <div class="card">
+            <div class="card-header card-header-custom">
+                <i class="bi bi-people"></i> Gerenciamento de Usuários
+            </div>
+            <div class="card-body">
+                <!-- Formulário de Criação -->
+                <form method="POST" action="/criar_usuario" class="mb-4">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" name="username" 
+                                   placeholder="Nome de usuário" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="password" class="form-control" name="password" 
+                                   placeholder="Senha" required>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" name="role" required>
+                                <option value="vendedor">Vendedor</option>
+                                <option value="gerente">Gerente</option>
+                                <option value="suporte">Suporte</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-person-plus"></i> Criar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Lista de Usuários -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Cargo</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios %}
+                            <tr>
+                                <td>{{ usuario.username }}</td>
+                                <td>
+                                    <span class="badge user-role-badge bg-{{ 
+                                        'primary' if usuario.role == 'vendedor' 
+                                        else 'success' if usuario.role == 'gerente' 
+                                        else 'warning' }}">
+                                        {{ usuario.role|capitalize }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <i class="bi bi-circle-fill text-success"></i> Ativo
+                                </td>
+                                <td>
+                                    <a href="/editar_usuario/{{ usuario.id }}" class="btn btn-warning btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="/excluir_usuario/{{ usuario.id }}" 
+                                       class="btn btn-danger btn-sm" 
+                                       onclick="return confirm('Tem certeza que deseja excluir este usuário?')">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes da Ação -->
+    {% for acao in acoes %}
+    <div class="modal fade" id="detalhesAcao{{ acao.id }}" tabindex="-1" aria-labelledby="detalhesAcaoLabel{{ acao.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="detalhesAcaoLabel{{ acao.id }}">Detalhes da Ação #{{ acao.id }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Data Criação:</dt>
+                        <dd class="col-sm-9">{{ acao.data_criacao.strftime('%d/%m/%Y %H:%M') }}</dd>
+
+                        <dt class="col-sm-3">Tipo:</dt>
+                        <dd class="col-sm-9">{{ acao.tipo }}</dd>
+
+                        <dt class="col-sm-3">Vendedor:</dt>
+                        <dd class="col-sm-9">{{ acao.user.username }}</dd>
+
+                        <dt class="col-sm-3">Cliente:</dt>
+                        <dd class="col-sm-9">{{ acao.cliente_codigo }}</dd>
+
+                        <dt class="col-sm-3">Meio Pagamento:</dt>
+                        <dd class="col-sm-9">
+                            {% if acao.meio_pagamento %}
+                                {{ acao.meio_pagamento.nome }} ({{ acao.meio_pagamento.desconto_percentual }}%)
+                            {% else %}
+                                Não aplicável
+                            {% endif %}
+                        </dd>
+                    </dl>
+
+                    <h5 class="mt-4">Produtos</h5>
+                    <ul class="list-group">
+                        {% for produto in acao.produtos %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ produto.codigo }}</strong><br>
+                                <small class="text-muted">
+                                    Atual: R$ {{ "%.2f"|format(produto.valor_atual) }} | 
+                                    Desejado: R$ {{ "%.2f"|format(produto.valor_desejado) }} | 
+                                    Final: R$ {{ "%.2f"|format(produto.valor_final) }}
+                                </small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">
+                                {{ ((produto.valor_atual - produto.valor_desejado)/produto.valor_atual * 100)|round(2) }}%
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

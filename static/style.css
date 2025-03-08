@@ -1,0 +1,49 @@
+:root {
+    --cor-primaria: #FFFFFF;    /* Branco */
+    --cor-secundaria: #019313;  /* Verde claro */
+    --cor-fundo: #013305;       /* Verde escuro */
+    --cor-texto: #FFD012;       /* Amarelo */
+}
+
+body {
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+    font-family: 'Roboto', sans-serif;
+}
+
+.navbar-custom {
+    background-color: var(--cor-primaria) !important;
+}
+
+.btn-custom {
+    background-color: var(--cor-secundaria);
+    border: none;
+    color: white;
+    transition: background-color 0.3s;
+}
+
+.btn-custom:hover {
+    background-color: #017a0e; /* Tom mais escuro do verde claro */
+}
+
+.login-container {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    max-width: 400px;
+    margin: 100px auto;
+}
+
+.dashboard-container {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 20px;
+}
+
+h1, h2, h3 {
+    font-family: 'Poppins', sans-serif;
+    color: var(--cor-secundaria);
+}

@@ -1,0 +1,90 @@
+<!-- templates/partials/tabela_acoes.html -->
+<form method="POST" action="/aprovar_acao">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <i class="bi bi-list-task"></i> Ações Comerciais
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
+                            <th>Vendedor</th>
+                            <th>Cliente</th>
+                            <th>Produto</th>
+                            <th>Valor Atual</th>
+                            <th>Valor Desejado</th>
+                            <th>Valor Final</th>
+                            <th>Desconto</th>
+                            <th>Meio Pagamento</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for acao in acoes %}
+                            {% for produto in acao.produtos %}
+                            <tr class="hover-row align-middle">
+                                <td>
+                                    {% if acao.status == 'pendente' %}
+                                    <input type="checkbox" name="acao_ids" value="{{ acao.id }}">
+                                    {% endif %}
+                                </td>
+                                <td>{{ acao.user.username }}</td>
+                                <td>{{ acao.cliente_codigo }}</td>
+                                <td>{{ produto.codigo }}</td>
+                                <td>R$ {{ "%.2f"|format(produto.valor_atual) }}</td>
+                                <td>R$ {{ "%.2f"|format(produto.valor_desejado) }}</td>
+                                <td>R$ {{ "%.2f"|format(produto.valor_final) }}</td>
+                                <td class="{{ 'discount-positive' if produto.valor_desejado < produto.valor_atual else 'discount-negative' }}">
+                                    {{ ((produto.valor_atual - produto.valor_desejado)/produto.valor_atual * 100)|round(2) }}%
+                                </td>
+                                <td>
+                                    {% if acao.tipo == 'MOB' and acao.meio_pagamento %}
+                                        <span class="badge bg-primary">
+                                            {{ acao.meio_pagamento.nome }} ({{ acao.meio_pagamento.desconto_percentual }}%)
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge status-badge rounded-pill bg-{{ 
+                                        'success' if acao.status == 'aprovado' 
+                                        else 'danger' if acao.status == 'reprovado' 
+                                        else 'warning' }}">
+                                        {{ acao.status|capitalize }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#detalhesAcao{{ acao.id }}">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-light">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <button type="submit" class="btn btn-success" name="action" value="aprovar">
+                        <i class="bi bi-check-circle"></i> Aprovar Selecionados
+                    </button>
+                    <button type="submit" class="btn btn-danger ms-2" name="action" value="reprovar">
+                        <i class="bi bi-x-circle"></i> Reprovar Selecionados
+                    </button>
+                </div>
+                <a href="/gerar_relatorio" class="btn btn-primary">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Gerar Relatório
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
